@@ -1,50 +1,48 @@
-// Playground - noun: a place where people can play
-
-import UIKit
-
 // This is a solution to Project Euler's problem number 15: https://projecteuler.net/problem=15
-// (It takes a few seconds to run on a MacBook Pro from 2013)
 
-var startingPoint = (0, 0)
-var finishPoint = (20, 20)
+var memoizedSolutions = [String : UInt64]()
 
-var memoized = Dictionary<String, Int>()
+func numberOfPathsTo(end:(x:Int, y:Int)) -> UInt64 {
+    return numberOfPathsHelper((0, 0), end)
+}
 
-func numberOfPathsHelper(start:(Int, Int), end:(Int, Int)) -> Int {
-    if (start.0 == end.0 && start.1 == end.1) {
+func numberOfPathsHelper(current:(x:Int, y:Int), _ end:(x:Int, y:Int)) -> UInt64 {
+    
+    let reachedTheEnd = current.x == end.x && current.y == end.y
+    if (reachedTheEnd) {
         return 1
     }
     
-    let distanceToEnd = (end.0 - start.0, end.1 - start.1)
-    let key = "\(distanceToEnd.0)-\(distanceToEnd.1)"
-    if let value = memoized[key] {
-        return value
+    let dx = end.x - current.x
+    let dy = end.y - current.y
+    let key = "\(dx)-\(dy)"
+    
+    if let memoizedSolution = memoizedSolutions[key] {
+        return memoizedSolution
     }
     
-    if (start.0 < end.0 && start.1 < end.1) {
-        return numberOfPathsHelper((start.0 + 1, start.1), end) + numberOfPathsHelper((start.0, start.1 + 1), end)
-    } else if (start.0 < end.0) {
-        return numberOfPathsHelper((start.0 + 1, start.1), end)
-    } else if (start.1 < end.1) {
-        return numberOfPathsHelper((start.0, start.1 + 1), end)
+    let canMoveRight = current.x < end.x
+    let canMoveDown = current.y < end.y
+    let right = (current.x + 1, current.y)
+    let down = (current.x, current.y + 1)
+    
+    if (canMoveRight && canMoveDown) {
+        let result = numberOfPathsHelper(right, end) + numberOfPathsHelper(down, end)
+        memoizedSolutions[key] = result
+        return result
+    } else if (canMoveRight) {
+        let result = numberOfPathsHelper(right, end)
+        memoizedSolutions[key] = result
+        return result
+    } else if (canMoveDown) {
+        let result = numberOfPathsHelper(down, end)
+        memoizedSolutions[key] = result
+        return result
     }
+    
+    assert(false, "Should not reach this point.")
     return 0
 }
 
-func numberOfPaths(start:(Int, Int), end:(Int, Int)) -> Int {
-    
-    for var i = 1; i < end.0; i++ {
-        for var x = 1; x <= i; x++ {
-            for var y = 1; y <= i; y++ {
-                let value = numberOfPathsHelper(start, (x, y))
-                let key = "\(x)-\(y)"
-                memoized[key] = value
-            }
-        }
-
-    }
-    
-    return numberOfPathsHelper(start, end)
-}
-
-numberOfPaths(startingPoint, finishPoint)
+numberOfPathsTo((2, 2)) == 6
+numberOfPathsTo((20, 20)) == 137846528820
